@@ -18,7 +18,7 @@
     --accent: #b8650a;
     --bullet: #9a8b7a;
     --row-h: 48px;
-    --font-size: 17px;
+    --font-size: 24px;
   }
 
   body {
@@ -311,6 +311,60 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ===== カスタム確認ダイアログ ===== */
+  #confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+  }
+  #confirm-overlay.open { display: flex; }
+  #confirm-dialog {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 24px 20px 16px;
+    width: 280px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  #confirm-dialog p {
+    font-size: 15px;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.5;
+  }
+  .confirm-btns {
+    display: flex;
+    gap: 10px;
+  }
+  .confirm-btns button {
+    flex: 1;
+    height: 44px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  #confirm-cancel {
+    background: var(--bg);
+    color: var(--text-muted);
+  }
+  #confirm-cancel:active { background: var(--border); }
+  #confirm-ok {
+    background: #c0392b;
+    color: white;
+    border-color: #c0392b;
+    font-weight: 500;
+  }
+  #confirm-ok:active { background: #a93226; }
 </style>
 </head>
 <body>
@@ -352,7 +406,7 @@
         <span class="size-label">中 (15px)</span>
         <span class="check-icon">✓</span>
       </button>
-      <button class="font-size-option active" data-size="17">
+      <button class="font-size-option" data-size="17">
         <span class="size-preview" style="font-size:17px">あAaあ</span>
         <span class="size-label">標準 (17px)</span>
         <span class="check-icon">✓</span>
@@ -362,11 +416,21 @@
         <span class="size-label">大 (20px)</span>
         <span class="check-icon">✓</span>
       </button>
-      <button class="font-size-option" data-size="24">
+      <button class="font-size-option active" data-size="24">
         <span class="size-preview" style="font-size:24px">あAaあ</span>
         <span class="size-label">特大 (24px)</span>
         <span class="check-icon">✓</span>
       </button>
+    </div>
+  </div>
+</div>
+
+<div id="confirm-overlay">
+  <div id="confirm-dialog">
+    <p>全てのメモを削除しますか？</p>
+    <div class="confirm-btns">
+      <button id="confirm-cancel">キャンセル</button>
+      <button id="confirm-ok">削除</button>
     </div>
   </div>
 </div>
@@ -383,6 +447,7 @@
   </div>
   <button class="tool-btn primary" id="btn-add" title="行を追加">＋</button>
   <button class="tool-btn" id="btn-delete" title="行を削除" style="font-size:18px;">🗑</button>
+  <button class="tool-btn" id="btn-clear" title="全てクリア" style="font-size:15px;">全消</button>
 </footer>
 
 <script>
@@ -399,7 +464,7 @@ const FONT_SIZE_KEY  = 'kaisou-memo-fontsize';
 // フォントサイズ管理
 // ================================================================
 const FONT_SIZES = [13, 15, 17, 20, 24];
-let currentFontSize = 17;
+let currentFontSize = 24;
 
 function loadFontSize() {
   try {
@@ -464,12 +529,7 @@ function load() {
     }
   } catch(e) {}
   lines = [
-    { id: nextId++, text: '味噌汁',   indent: 0, collapsed: false },
-    { id: nextId++, text: 'ワカメ',   indent: 1, collapsed: false },
-    { id: nextId++, text: '大根冷凍', indent: 1, collapsed: false },
-    { id: nextId++, text: '油揚げ',   indent: 1, collapsed: false },
-    { id: nextId++, text: '鮭',       indent: 0, collapsed: false },
-    { id: nextId++, text: 'ごはん',   indent: 0, collapsed: false },
+    { id: nextId++, text: '', indent: 0, collapsed: false },
   ];
 }
 
@@ -670,16 +730,14 @@ function selfCheck() {
     }
   }
 
-  // 3. hasChildren / トグルボタン判定
-  const idx0 = lines.findIndex(l => l.text === '味噌汁');
-  if (idx0 >= 0) {
-    if (!lineHasChildren(idx0)) {
-      errors.push('味噌汁: hasChildren=false (trueのはず)');
-    } else {
-      const row = document.querySelector('.line-row[data-id="' + lines[idx0].id + '"]');
+  // 3. hasChildren / トグルボタン判定（子を持つ行が存在する場合のみ）
+  for (let i = 0; i < lines.length; i++) {
+    if (lineHasChildren(i)) {
+      const row = document.querySelector('.line-row[data-id="' + lines[i].id + '"]');
       if (row && !row.querySelector('.toggle-btn')) {
-        errors.push('味噌汁行: toggle-btnが存在しない');
+        errors.push('id=' + lines[i].id + ' の行: hasChildren=trueなのにtoggle-btnがない');
       }
+      break; // 1件確認すれば十分
     }
   }
 
@@ -730,6 +788,21 @@ document.getElementById('btn-indent').addEventListener('click', indentSelected);
 document.getElementById('btn-outdent').addEventListener('click', outdentSelected);
 document.getElementById('btn-add').addEventListener('click', addLineAfterSelected);
 document.getElementById('btn-delete').addEventListener('click', deleteSelected);
+document.getElementById('btn-clear').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.add('open');
+});
+document.getElementById('confirm-cancel').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.remove('open');
+});
+document.getElementById('confirm-ok').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  nextId = 1;
+  lines = [{ id: nextId++, text: '', indent: 0, collapsed: false }];
+  selectedId = null;
+  save();
+  render();
+  focusLine(lines[0].id);
+});
 
 loadFontSize();
 load();
