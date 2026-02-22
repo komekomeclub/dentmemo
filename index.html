@@ -6,611 +6,814 @@
 <title>階層メモ</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&display=swap');
-  * { box-sizing:border-box; margin:0; padding:0; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
   :root {
-    --bg:#f0ebe3; --surface:#e8e2d9; --border:#c8bfb0;
-    --text:#3a342c; --text-muted:#8a7d6e; --accent:#b8650a;
-    --bullet:#9a8b7a; --row-h:48px; --font-size:24px;
+    --bg: #f0ebe3;
+    --surface: #e8e2d9;
+    --border: #c8bfb0;
+    --text: #3a342c;
+    --text-muted: #8a7d6e;
+    --accent: #b8650a;
+    --bullet: #9a8b7a;
+    --row-h: 48px;
+    --font-size: 24px;
   }
-  body { font-family:'Noto Sans JP',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
 
-  .screen { display:none; flex-direction:column; height:100vh; }
-  .screen.active { display:flex; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
 
-  .hdr { flex-shrink:0; padding:14px 16px 12px; border-bottom:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:space-between; }
-  .hdr-left { display:flex; align-items:center; gap:10px; }
-  .hdr h1 { font-size:17px; font-weight:500; color:var(--text-muted); letter-spacing:.04em; }
-  .icon-btn { width:36px; height:36px; border-radius:8px; border:1.5px solid var(--border); background:var(--bg); color:var(--text-muted); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; -webkit-tap-highlight-color:transparent; }
-  .icon-btn:active { transform:scale(.9); background:var(--border); }
+  /* ===== ヘッダー ===== */
+  header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  header h1 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
 
-  /* 一覧 */
-  #list-body { flex:1; overflow-y:auto; padding:16px 12px; }
-  #list-footer { flex-shrink:0; background:var(--surface); border-top:1px solid var(--border); padding:12px 20px; display:flex; align-items:center; justify-content:center; }
-  #btn-new { display:flex; align-items:center; gap:8px; padding:13px 32px; border-radius:12px; border:none; background:var(--accent); color:white; font-family:inherit; font-size:17px; font-weight:500; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:all .15s; }
-  #btn-new:active { transform:scale(.96); background:#9a5508; }
-  .nb-item { display:flex; align-items:center; gap:12px; padding:14px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); margin-bottom:10px; cursor:pointer; transition:all .15s; -webkit-tap-highlight-color:transparent; }
-  .nb-item:active { transform:scale(.98); border-color:var(--accent); }
-  .nb-title { font-size:17px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .nb-title.empty { color:var(--text-muted); font-style:italic; }
-  .nb-sub { font-size:12px; color:var(--text-muted); margin-top:2px; }
-  .list-empty { text-align:center; color:var(--text-muted); padding:60px 20px; font-size:15px; line-height:2; }
+  /* ===== メニューボタン（ヘッダー右） ===== */
+  #menu-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #menu-btn:hover { background: var(--border); }
+  #menu-btn:active { transform: scale(0.9); }
 
-  /* 編集画面 */
-  #memo-body { flex:1; overflow-y:auto; padding:12px; }
-  #edit-footer { flex-shrink:0; background:var(--surface); border-top:1px solid var(--border); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; }
-  .fi-group { display:flex; flex-direction:column; align-items:center; gap:2px; }
-  .fi-btns { display:flex; gap:6px; }
-  .fi-label { font-size:11px; color:var(--text-muted); }
-  .tbtn { width:48px; height:48px; border-radius:10px; border:1.5px solid var(--border); background:var(--bg); color:var(--text); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; -webkit-tap-highlight-color:transparent; }
-  .tbtn:active { background:var(--accent); color:white; border-color:var(--accent); transform:scale(.93); }
-  .tbtn:disabled { opacity:.3; cursor:default; }
-  .tbtn.pri { background:var(--accent); color:white; border-color:var(--accent); font-size:22px; font-weight:bold; }
+  /* ===== ドロワーオーバーレイ ===== */
+  #drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    z-index: 200;
+  }
+  #drawer-overlay.open { display: block; }
 
-  /* ===== 行 ===== */
-  .line-wrap { position:relative; }
-  .line-wrap.hidden { display:none; }
+  /* ===== ドロワー本体 ===== */
+  #drawer {
+    position: fixed;
+    top: 0; right: -280px;
+    width: 260px;
+    height: 100%;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 201;
+    transition: right 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+  #drawer.open { right: 0; }
+
+  .drawer-header {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .drawer-header h2 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+  #drawer-close {
+    width: 30px; height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px;
+    transition: background 0.12s;
+  }
+  #drawer-close:hover { background: var(--border); }
+
+  .drawer-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .drawer-section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* フォントサイズ選択 */
+  .font-size-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .font-size-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .font-size-option:hover {
+    border-color: var(--accent);
+    background: rgba(184,101,10,0.05);
+  }
+  .font-size-option.active {
+    border-color: var(--accent);
+    background: rgba(184,101,10,0.1);
+    color: var(--accent);
+  }
+  .font-size-option .size-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex: 1;
+  }
+  .font-size-option.active .size-label {
+    color: var(--accent);
+  }
+  .font-size-option .size-preview {
+    font-weight: 300;
+  }
+  .font-size-option .check-icon {
+    width: 16px;
+    font-size: 14px;
+    text-align: center;
+    color: var(--accent);
+    opacity: 0;
+  }
+  .font-size-option.active .check-icon { opacity: 1; }
+
+  /* ===== メモコンテナ ===== */
+  #memo-container {
+    flex: 1;
+    padding: 16px 12px 120px;
+    overflow-y: auto;
+  }
+
   .line-row {
-    display:flex; align-items:flex-start; min-height:var(--row-h);
-    border-radius:6px; transition:background .1s; position:relative;
-    animation:fadeIn .13s ease;
+    display: flex;
+    align-items: flex-start;
+    min-height: var(--row-h);
+    border-radius: 6px;
+    transition: background 0.1s;
+    position: relative;
   }
-  .line-row[data-indent="1"] { padding-left:28px; }
-  .line-row[data-indent="2"] { padding-left:56px; }
-  .line-row.sel, .line-row:focus-within { background:rgba(184,101,10,.07); }
-  .line-row.drag-over { background:rgba(184,101,10,.12); }
-  .line-row[data-indent="1"]::before { content:''; position:absolute; left:14px; top:0; bottom:0; width:2px; background:var(--border); opacity:.4; border-radius:2px; }
-  .line-row[data-indent="2"]::before { content:''; position:absolute; left:42px; top:0; bottom:0; width:2px; background:var(--border); opacity:.4; border-radius:2px; }
+  .line-row[data-indent="0"] { padding-left: 0; }
+  .line-row[data-indent="1"] { padding-left: 28px; }
+  .line-row[data-indent="2"] { padding-left: 56px; }
 
-  /* ドラッグハンドル */
-  .drag-handle {
-    flex-shrink:0; width:24px; height:var(--row-h);
-    display:flex; align-items:center; justify-content:center;
-    color:var(--border); font-size:14px; cursor:grab;
-    touch-action:none; user-select:none;
-    -webkit-tap-highlight-color:transparent;
-    transition:color .15s;
-  }
-  .drag-handle:hover { color:var(--text-muted); }
-  .drag-handle:active { cursor:grabbing; color:var(--accent); }
-
-  /* ドロップインジケーター */
-  .drop-indicator {
-    height:3px; background:var(--accent); border-radius:2px;
-    margin:0 8px; display:none; pointer-events:none;
-  }
-  .drop-indicator.visible { display:block; }
-
-  /* ドラッグ中の行グループ */
-  .line-wrap.dragging { opacity:.4; }
-
-  /* ゴースト（ドラッグ中の浮いてる要素） */
-  #drag-ghost {
-    position:fixed; pointer-events:none; z-index:9999;
-    background:var(--surface); border:1.5px solid var(--accent);
-    border-radius:8px; padding:8px 12px;
-    font-family:'Noto Sans JP',sans-serif; font-size:var(--font-size);
-    font-weight:300; color:var(--text);
-    box-shadow:0 6px 24px rgba(0,0,0,.18);
-    max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    display:none; transform:rotate(1.5deg);
+  .line-row.selected,
+  .line-row:focus-within {
+    background: rgba(184,101,10,0.07);
   }
 
-  .li-icon { flex-shrink:0; width:28px; height:var(--row-h); display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--bullet); user-select:none; }
-  .tog-btn { flex-shrink:0; width:28px; height:var(--row-h); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--accent); background:transparent; border:none; cursor:pointer; border-radius:6px; -webkit-tap-highlight-color:transparent; }
-  .tog-btn:active { transform:scale(.88); }
-  .li-input { flex:1; background:transparent; border:none; outline:none; font-family:inherit; font-size:var(--font-size); font-weight:300; color:var(--text); line-height:1.5; padding:10px 8px 10px 2px; caret-color:var(--accent); resize:none; overflow:hidden; min-height:var(--row-h); }
-  .li-input::placeholder { color:var(--border); }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(-3px)} to{opacity:1;transform:translateY(0)} }
+  .line-row[data-indent="1"]::before {
+    content: '';
+    position: absolute;
+    left: 14px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+    opacity: 0.45;
+    border-radius: 2px;
+  }
+  .line-row[data-indent="2"]::before {
+    content: '';
+    position: absolute;
+    left: 42px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+    opacity: 0.45;
+    border-radius: 2px;
+  }
 
-  /* ドロワー */
-  #drawer-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.25); z-index:200; }
-  #drawer-overlay.open { display:block; }
-  #drawer { position:fixed; top:0; right:-280px; width:260px; height:100%; background:var(--surface); border-left:1px solid var(--border); z-index:201; transition:right .25s ease; display:flex; flex-direction:column; }
-  #drawer.open { right:0; }
-  .drw-hdr { padding:16px 16px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
-  .drw-hdr h2 { font-size:15px; font-weight:500; color:var(--text-muted); }
-  #drw-close { width:30px; height:30px; border:none; background:transparent; color:var(--text-muted); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:6px; }
-  #drw-close:hover { background:var(--border); }
-  .drw-sec { padding:16px; border-bottom:1px solid var(--border); }
-  .drw-sec-title { font-size:11px; font-weight:500; color:var(--text-muted); letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px; }
-  .fs-opts { display:flex; flex-direction:column; gap:6px; }
-  .fs-opt { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--bg); cursor:pointer; transition:all .15s; -webkit-tap-highlight-color:transparent; }
-  .fs-opt:hover { border-color:var(--accent); }
-  .fs-opt.active { border-color:var(--accent); background:rgba(184,101,10,.1); color:var(--accent); }
-  .fs-opt .lbl { font-size:12px; color:var(--text-muted); flex:1; }
-  .fs-opt.active .lbl { color:var(--accent); }
-  .fs-opt .chk { width:16px; font-size:14px; color:var(--accent); opacity:0; }
-  .fs-opt.active .chk { opacity:1; }
+  .line-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: var(--row-h);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    color: var(--bullet);
+    user-select: none;
+  }
 
-  /* 確認ダイアログ */
-  #conf-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:300; align-items:center; justify-content:center; }
-  #conf-overlay.open { display:flex; }
-  #conf-box { background:var(--surface); border-radius:14px; padding:24px 20px 16px; width:280px; box-shadow:0 8px 32px rgba(0,0,0,.18); display:flex; flex-direction:column; gap:16px; }
-  #conf-box p { font-size:15px; text-align:center; line-height:1.5; }
-  .conf-btns { display:flex; gap:10px; }
-  .conf-btns button { flex:1; height:44px; border-radius:10px; border:1.5px solid var(--border); font-family:inherit; font-size:15px; cursor:pointer; }
-  #conf-cancel { background:var(--bg); color:var(--text-muted); }
-  #conf-ok { background:#c0392b; color:white; border-color:#c0392b; font-weight:500; }
+  .toggle-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: var(--row-h);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    color: var(--accent);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .toggle-btn:hover { background: rgba(184,101,10,0.12); }
+  .toggle-btn:active { transform: scale(0.88); }
 
-  ::-webkit-scrollbar { width:4px; }
-  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .line-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: var(--font-size);
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.5;
+    padding: 10px 8px 10px 2px;
+    caret-color: var(--accent);
+    resize: none;
+    overflow: hidden;
+    min-height: var(--row-h);
+  }
+  .line-input::placeholder { color: var(--border); }
+
+  .line-wrap.hidden { display: none; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .line-row { animation: fadeIn 0.13s ease; }
+
+  /* ===== フッター ===== */
+  footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+  }
+  .footer-indent-group { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .footer-indent-btns  { display: flex; gap: 6px; }
+  .indent-label        { font-size: 11px; color: var(--text-muted); letter-spacing: 0.03em; }
+
+  .tool-btn {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tool-btn:active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(0.93); }
+  .tool-btn:disabled { opacity: 0.3; cursor: default; }
+  .tool-btn.primary { background: var(--accent); color: white; border-color: var(--accent); font-weight: bold; font-size: 22px; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ===== カスタム確認ダイアログ ===== */
+  #confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+  }
+  #confirm-overlay.open { display: flex; }
+  #confirm-dialog {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 24px 20px 16px;
+    width: 280px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  #confirm-dialog p {
+    font-size: 15px;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.5;
+  }
+  .confirm-btns {
+    display: flex;
+    gap: 10px;
+  }
+  .confirm-btns button {
+    flex: 1;
+    height: 44px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  #confirm-cancel {
+    background: var(--bg);
+    color: var(--text-muted);
+  }
+  #confirm-cancel:active { background: var(--border); }
+  #confirm-ok {
+    background: #c0392b;
+    color: white;
+    border-color: #c0392b;
+    font-weight: 500;
+  }
+  #confirm-ok:active { background: #a93226; }
 </style>
 </head>
 <body>
 
-<!-- 画面A: 一覧 -->
-<div id="screen-list" class="screen active">
-  <header class="hdr">
-    <div class="hdr-left">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <h1>メモ一覧</h1>
-    </div>
-  </header>
-  <div id="list-body"></div>
-  <div id="list-footer">
-    <button id="btn-new">＋　新しいメモ</button>
+<header>
+  <div class="header-left">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+    <h1>階層メモ</h1>
   </div>
-</div>
+  <button id="menu-btn" title="メニュー">☰</button>
+</header>
 
-<!-- 画面B: 編集 -->
-<div id="screen-edit" class="screen">
-  <header class="hdr">
-    <div class="hdr-left">
-      <button class="icon-btn" id="btn-back">←</button>
-      <h1 id="edit-title">メモ</h1>
-    </div>
-    <button class="icon-btn" id="btn-menu">☰</button>
-  </header>
-  <div id="memo-body"></div>
-  <div id="edit-footer">
-    <div class="fi-group">
-      <div class="fi-btns">
-        <button class="tbtn" id="btn-out">←</button>
-        <button class="tbtn" id="btn-in">→</button>
-      </div>
-      <span class="fi-label">インデント</span>
-    </div>
-    <button class="tbtn pri" id="btn-add">＋</button>
-    <button class="tbtn" id="btn-del" style="font-size:18px">🗑</button>
-    <button class="tbtn" id="btn-clr" style="font-size:15px">全消</button>
-  </div>
-</div>
+<!-- ドロワーオーバーレイ -->
+<div id="drawer-overlay"></div>
 
 <!-- ドロワー -->
-<div id="drawer-overlay"></div>
 <div id="drawer">
-  <div class="drw-hdr"><h2>設定</h2><button id="drw-close">✕</button></div>
-  <div class="drw-sec">
-    <div class="drw-sec-title">フォントサイズ</div>
-    <div class="fs-opts" id="fs-opts">
-      <button class="fs-opt" data-size="13"><span style="font-size:13px;font-weight:300">あAa</span><span class="lbl">小 (13px)</span><span class="chk">✓</span></button>
-      <button class="fs-opt" data-size="15"><span style="font-size:15px;font-weight:300">あAa</span><span class="lbl">中 (15px)</span><span class="chk">✓</span></button>
-      <button class="fs-opt" data-size="17"><span style="font-size:17px;font-weight:300">あAa</span><span class="lbl">標準 (17px)</span><span class="chk">✓</span></button>
-      <button class="fs-opt" data-size="20"><span style="font-size:20px;font-weight:300">あAa</span><span class="lbl">大 (20px)</span><span class="chk">✓</span></button>
-      <button class="fs-opt active" data-size="24"><span style="font-size:24px;font-weight:300">あAa</span><span class="lbl">特大 (24px)</span><span class="chk">✓</span></button>
+  <div class="drawer-header">
+    <h2>設定</h2>
+    <button id="drawer-close">✕</button>
+  </div>
+
+  <div class="drawer-section">
+    <div class="drawer-section-title">フォントサイズ</div>
+    <div class="font-size-options" id="font-size-options">
+      <button class="font-size-option" data-size="13">
+        <span class="size-preview" style="font-size:13px">あAaあ</span>
+        <span class="size-label">小 (13px)</span>
+        <span class="check-icon">✓</span>
+      </button>
+      <button class="font-size-option" data-size="15">
+        <span class="size-preview" style="font-size:15px">あAaあ</span>
+        <span class="size-label">中 (15px)</span>
+        <span class="check-icon">✓</span>
+      </button>
+      <button class="font-size-option" data-size="17">
+        <span class="size-preview" style="font-size:17px">あAaあ</span>
+        <span class="size-label">標準 (17px)</span>
+        <span class="check-icon">✓</span>
+      </button>
+      <button class="font-size-option" data-size="20">
+        <span class="size-preview" style="font-size:20px">あAaあ</span>
+        <span class="size-label">大 (20px)</span>
+        <span class="check-icon">✓</span>
+      </button>
+      <button class="font-size-option active" data-size="24">
+        <span class="size-preview" style="font-size:24px">あAaあ</span>
+        <span class="size-label">特大 (24px)</span>
+        <span class="check-icon">✓</span>
+      </button>
     </div>
   </div>
 </div>
 
-<!-- 確認ダイアログ -->
-<div id="conf-overlay">
-  <div id="conf-box">
-    <p>このメモの内容を全て削除しますか？</p>
-    <div class="conf-btns">
-      <button id="conf-cancel">キャンセル</button>
-      <button id="conf-ok">削除</button>
+<div id="confirm-overlay">
+  <div id="confirm-dialog">
+    <p>全てのメモを削除しますか？</p>
+    <div class="confirm-btns">
+      <button id="confirm-cancel">キャンセル</button>
+      <button id="confirm-ok">削除</button>
     </div>
   </div>
 </div>
 
-<!-- DnDゴースト -->
-<div id="drag-ghost"></div>
+<div id="memo-container"></div>
+
+<footer>
+  <div class="footer-indent-group">
+    <div class="footer-indent-btns">
+      <button class="tool-btn" id="btn-outdent" title="デント解消（←）">←</button>
+      <button class="tool-btn" id="btn-indent"  title="デント（→）">→</button>
+    </div>
+    <span class="indent-label">インデント</span>
+  </div>
+  <button class="tool-btn primary" id="btn-add" title="行を追加">＋</button>
+  <button class="tool-btn" id="btn-delete" title="行を削除" style="font-size:18px;">🗑</button>
+  <button class="tool-btn" id="btn-clear" title="全てクリア" style="font-size:15px;">全消</button>
+</footer>
 
 <script>
 // ================================================================
-// 状態
+// データ
 // ================================================================
-const NB_KEY   = 'kaisou-nb-v1';
-const FONT_KEY = 'kaisou-font-v1';
-const FS_LIST  = [13,15,17,20,24];
-
-let notebooks  = [];
-let nbNextId   = 1;
-let curNbId    = null;
-let lines      = [];
-let lineNextId = 1;
-let selId      = null;
-let fontSize   = 24;
+let lines = [];
+let selectedId = null;
+let nextId = 1;
+const STORAGE_KEY    = 'kaisou-memo-v3';
+const FONT_SIZE_KEY  = 'kaisou-memo-fontsize';
 
 // ================================================================
-// ストレージ
+// フォントサイズ管理
 // ================================================================
-function persist() {
-  if (curNbId !== null) {
-    const nb = notebooks.find(n=>n.id===curNbId);
-    if (nb) { nb.lines=lines; nb.lineNextId=lineNextId; }
-  }
-  try { localStorage.setItem(NB_KEY, JSON.stringify({notebooks,nbNextId})); } catch(e){}
-}
+const FONT_SIZES = [13, 15, 17, 20, 24];
+let currentFontSize = 24;
 
-function loadData() {
+function loadFontSize() {
   try {
-    const d = JSON.parse(localStorage.getItem(NB_KEY)||'null');
-    if (d && Array.isArray(d.notebooks) && d.notebooks.length>0) {
-      notebooks = d.notebooks.map(nb=>({
-        id:nb.id, lineNextId:nb.lineNextId||2,
-        lines:(nb.lines||[]).map(l=>({id:l.id,text:l.text||'',indent:l.indent||0,collapsed:!!l.collapsed}))
-      }));
-      nbNextId = d.nbNextId || Math.max(...notebooks.map(n=>n.id))+1;
-      return;
-    }
-  } catch(e){}
-  notebooks=[]; nbNextId=1;
+    const saved = parseInt(localStorage.getItem(FONT_SIZE_KEY), 10);
+    if (FONT_SIZES.includes(saved)) currentFontSize = saved;
+  } catch(e) {}
 }
 
-function loadFont() {
-  try { const s=parseInt(localStorage.getItem(FONT_KEY),10); if(FS_LIST.includes(s)) fontSize=s; } catch(e){}
-}
-
-function applyFont(size) {
-  fontSize=size;
-  document.documentElement.style.setProperty('--font-size',size+'px');
-  document.querySelectorAll('.fs-opt').forEach(el=>el.classList.toggle('active',parseInt(el.dataset.size,10)===size));
-  autoResize();
-  try { localStorage.setItem(FONT_KEY,size); } catch(e){}
-}
-
-// ================================================================
-// 画面切替
-// ================================================================
-function showList() {
-  persist(); curNbId=null;
-  document.getElementById('screen-list').classList.add('active');
-  document.getElementById('screen-edit').classList.remove('active');
-  renderList();
-}
-
-function showEdit() {
-  document.getElementById('screen-list').classList.remove('active');
-  document.getElementById('screen-edit').classList.add('active');
-}
-
-// ================================================================
-// 一覧
-// ================================================================
-function nbTitle(nb) {
-  if (!nb.lines||nb.lines.length===0) return null;
-  const f=nb.lines.find(l=>l.text.trim());
-  return f?f.text.trim():null;
-}
-
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function renderList() {
-  const el=document.getElementById('list-body');
-  el.innerHTML='';
-  if (notebooks.length===0) {
-    el.innerHTML='<div class="list-empty">「＋ 新しいメモ」からメモを追加してください</div>';
-    return;
-  }
-  notebooks.forEach(nb=>{
-    const title=nbTitle(nb);
-    const cnt=(nb.lines||[]).filter(l=>l.text.trim()).length;
-    const div=document.createElement('div');
-    div.className='nb-item';
-    div.innerHTML=`<div style="font-size:20px;color:var(--text-muted)">📄</div><div style="flex:1;min-width:0"><div class="nb-title ${title?'':'empty'}">${title?esc(title):'（無題）'}</div><div class="nb-sub">${cnt} 行</div></div><div style="color:var(--border);font-size:18px">›</div>`;
-    div.addEventListener('click',()=>openNb(nb.id));
-    el.appendChild(div);
+function applyFontSize(size) {
+  currentFontSize = size;
+  document.documentElement.style.setProperty('--font-size', size + 'px');
+  // アクティブ選択を更新
+  document.querySelectorAll('.font-size-option').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.size, 10) === size);
   });
-}
-
-function newNb() {
-  const nb={id:nbNextId++,lineNextId:2,lines:[{id:1,text:'',indent:0,collapsed:false}]};
-  notebooks.push(nb); persist(); openNb(nb.id);
-}
-
-function openNb(id) {
-  const nb=notebooks.find(n=>n.id===id); if(!nb) return;
-  curNbId=id;
-  lines=nb.lines.length>0?nb.lines:[{id:1,text:'',indent:0,collapsed:false}];
-  lineNextId=nb.lineNextId||Math.max(...lines.map(l=>l.id))+1;
-  selId=null;
-  document.getElementById('edit-title').textContent=nbTitle(nb)||'メモ';
-  showEdit(); renderMemo();
-  requestAnimationFrame(()=>{ if(lines.length) focusLine(lines[0].id); });
+  // textarea の高さを再計算
+  autoResizeAll();
+  try { localStorage.setItem(FONT_SIZE_KEY, size); } catch(e) {}
 }
 
 // ================================================================
-// メモ編集
+// ドロワー開閉
 // ================================================================
-function hasKids(idx) { return idx>=0&&idx<lines.length-1&&lines[idx+1].indent>lines[idx].indent; }
+function openDrawer() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
 
-function hiddenIds() {
-  const h=new Set();
-  for(let i=0;i<lines.length;i++) {
-    if(lines[i].collapsed&&hasKids(i)) {
-      for(let j=i+1;j<lines.length;j++) { if(lines[j].indent>lines[i].indent) h.add(lines[j].id); else break; }
+// ================================================================
+// コアロジック
+// ================================================================
+function lineHasChildren(idx) {
+  if (idx < 0 || idx >= lines.length - 1) return false;
+  return lines[idx + 1].indent > lines[idx].indent;
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ lines, nextId }));
+  } catch(e) {}
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.lines) && data.lines.length > 0) {
+        lines = data.lines.map(l => ({
+          id: l.id,
+          text: l.text || '',
+          indent: l.indent || 0,
+          collapsed: l.collapsed || false
+        }));
+        nextId = data.nextId || (Math.max(...lines.map(l => l.id)) + 1);
+        return;
+      }
+    }
+  } catch(e) {}
+  lines = [
+    { id: nextId++, text: '', indent: 0, collapsed: false },
+  ];
+}
+
+function calcHiddenIds() {
+  const hidden = new Set();
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].collapsed && lineHasChildren(i)) {
+      for (let j = i + 1; j < lines.length; j++) {
+        if (lines[j].indent > lines[i].indent) hidden.add(lines[j].id);
+        else break;
+      }
     }
   }
-  return h;
+  return hidden;
 }
 
-// idx番の行の「グループ（自身＋すべての子孫）」の末尾インデックスを返す
-function groupEnd(idx) {
-  const baseIndent = lines[idx].indent;
-  let end = idx;
-  for (let j=idx+1; j<lines.length; j++) {
-    if (lines[j].indent > baseIndent) end=j;
-    else break;
-  }
-  return end;
-}
+function render() {
+  const container = document.getElementById('memo-container');
+  container.innerHTML = '';
+  const hidden = calcHiddenIds();
 
-function renderMemo() {
-  const c=document.getElementById('memo-body');
-  c.innerHTML='';
-  const hidden=hiddenIds();
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx];
+    const hasKids = lineHasChildren(idx);
 
-  // ドロップインジケーター（最上部用）
-  c.appendChild(makeIndicator(-1));
+    const wrap = document.createElement('div');
+    wrap.className = 'line-wrap';
+    if (hidden.has(line.id)) wrap.classList.add('hidden');
 
-  for(let idx=0;idx<lines.length;idx++) {
-    const line=lines[idx];
-    const kids=hasKids(idx);
+    const row = document.createElement('div');
+    row.className = 'line-row';
+    row.dataset.id = String(line.id);
+    row.dataset.indent = String(line.indent);
+    if (line.id === selectedId) row.classList.add('selected');
 
-    const wrap=document.createElement('div');
-    wrap.className='line-wrap';
-    wrap.dataset.idx=String(idx);
-    if(hidden.has(line.id)) wrap.classList.add('hidden');
-
-    const row=document.createElement('div');
-    row.className='line-row';
-    row.dataset.id=String(line.id);
-    row.dataset.indent=String(line.indent);
-    if(line.id===selId) row.classList.add('sel');
-
-    // ドラッグハンドル
-    const handle=document.createElement('div');
-    handle.className='drag-handle';
-    handle.textContent='⠿';
-    handle.title='ドラッグして移動';
-    attachDragHandle(handle, idx);
-    row.appendChild(handle);
-
-    // ▽/▷ or ・
-    if(kids) {
-      const btn=document.createElement('button');
-      btn.className='tog-btn'; btn.textContent=line.collapsed?'▷':'▽';
-      btn.addEventListener('click',e=>{ e.stopPropagation(); line.collapsed=!line.collapsed; persist(); renderMemo(); focusLine(line.id); });
+    // 左アイコン
+    if (hasKids) {
+      const btn = document.createElement('button');
+      btn.className = 'toggle-btn';
+      btn.textContent = line.collapsed ? '▷' : '▽';
+      btn.title = '展開/折りたたみ';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const li = lines.find(l => l.id === line.id);
+        if (li) { li.collapsed = !li.collapsed; save(); render(); focusLine(li.id); }
+      });
       row.appendChild(btn);
     } else {
-      const icon=document.createElement('div');
-      icon.className='li-icon'; icon.textContent='•';
+      const icon = document.createElement('div');
+      icon.className = 'line-icon';
+      icon.textContent = '•';
       row.appendChild(icon);
     }
 
     // テキストエリア
-    const ta=document.createElement('textarea');
-    ta.className='li-input'; ta.value=line.text; ta.rows=1;
-    if(idx===0) ta.placeholder='メモを入力...';
-    ta.addEventListener('input',()=>{
-      ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
-      line.text=ta.value;
-      document.getElementById('edit-title').textContent=nbTitle(notebooks.find(n=>n.id===curNbId)||{lines})||'メモ';
-      persist();
+    const ta = document.createElement('textarea');
+    ta.className = 'line-input';
+    ta.value = line.text;
+    ta.rows = 1;
+    if (idx === 0) ta.placeholder = 'メモを入力...';
+
+    ta.addEventListener('input', () => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+      line.text = ta.value;
+      save();
     });
-    ta.addEventListener('focus',()=>{
-      selId=line.id;
-      document.querySelectorAll('.line-row.sel').forEach(el=>el.classList.remove('sel'));
-      row.classList.add('sel'); updBtns();
+    ta.addEventListener('focus', () => {
+      selectedId = line.id;
+      document.querySelectorAll('.line-row.selected').forEach(el => el.classList.remove('selected'));
+      row.classList.add('selected');
+      updateButtonStates();
     });
-    ta.addEventListener('keydown',e=>onKey(e,line));
+    ta.addEventListener('keydown', (e) => handleKeyDown(e, line));
+
     row.appendChild(ta);
     wrap.appendChild(row);
-    c.appendChild(wrap);
-
-    // 各行の下にドロップインジケーター
-    c.appendChild(makeIndicator(idx));
+    container.appendChild(wrap);
   }
 
-  updBtns();
-  requestAnimationFrame(autoResize);
+  updateButtonStates();
+  requestAnimationFrame(autoResizeAll);
 }
 
-function makeIndicator(afterIdx) {
-  const el=document.createElement('div');
-  el.className='drop-indicator';
-  el.dataset.afterIdx=String(afterIdx);
-  return el;
-}
-
-function autoResize() {
-  document.querySelectorAll('.li-input').forEach(ta=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; });
-}
-
-function focusLine(id) {
-  selId=id;
-  requestAnimationFrame(()=>{
-    const ta=document.querySelector(`.line-row[data-id="${id}"] .li-input`);
-    if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }
-    updBtns();
+function autoResizeAll() {
+  document.querySelectorAll('.line-input').forEach(ta => {
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
   });
 }
 
-function onKey(e,line) {
-  if(e.key==='Enter'&&!e.shiftKey) {
+function focusLine(id) {
+  selectedId = id;
+  requestAnimationFrame(() => {
+    const ta = document.querySelector(`.line-row[data-id="${id}"] .line-input`);
+    if (ta) {
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    }
+    updateButtonStates();
+  });
+}
+
+function handleKeyDown(e, line) {
+  if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
-    const idx=lines.findIndex(l=>l.id===line.id);
-    const nl={id:lineNextId++,text:'',indent:line.indent,collapsed:false};
-    lines.splice(idx+1,0,nl); persist(); renderMemo(); focusLine(nl.id);
-  } else if(e.key==='Backspace'&&line.text==='') {
+    const idx = lines.findIndex(l => l.id === line.id);
+    const newLine = { id: nextId++, text: '', indent: line.indent, collapsed: false };
+    lines.splice(idx + 1, 0, newLine);
+    save(); render(); focusLine(newLine.id);
+  } else if (e.key === 'Backspace' && line.text === '') {
     e.preventDefault();
-    if(line.indent>0) { line.indent--; persist(); renderMemo(); focusLine(line.id); }
-    else {
-      const idx=lines.findIndex(l=>l.id===line.id);
-      if(lines.length>1) { lines.splice(idx,1); persist(); renderMemo(); focusLine(lines[Math.max(0,idx-1)].id); }
+    if (line.indent > 0) {
+      line.indent--;
+      save(); render(); focusLine(line.id);
+    } else {
+      const idx = lines.findIndex(l => l.id === line.id);
+      if (lines.length > 1) {
+        lines.splice(idx, 1);
+        save(); render();
+        focusLine(lines[Math.max(0, idx - 1)].id);
+      }
     }
   }
 }
 
-function getSel() { return lines.find(l=>l.id===selId)||null; }
-function updBtns() {
-  const l=getSel();
-  document.getElementById('btn-in').disabled=!l||l.indent>=2;
-  document.getElementById('btn-out').disabled=!l||l.indent<=0;
+function getSelectedLine() {
+  if (selectedId == null) return null;
+  return lines.find(l => l.id === selectedId) || null;
 }
 
-// ================================================================
-// ドラッグ＆ドロップ
-// ================================================================
-let dnd = {
-  active: false,
-  srcIdx: -1,       // ドラッグ元の行インデックス
-  groupLen: 0,      // ドラッグするグループの行数
-  curAfterIdx: null // 現在のドロップ先（この行の後に挿入）
-};
-
-const ghost = document.getElementById('drag-ghost');
-
-function attachDragHandle(handle, idx) {
-  // タッチ
-  handle.addEventListener('touchstart', e=>startDrag(e, idx, e.touches[0].clientX, e.touches[0].clientY), {passive:false});
-  // マウス
-  handle.addEventListener('mousedown', e=>{ if(e.button===0) startDrag(e, idx, e.clientX, e.clientY); });
+function indentSelected() {
+  const line = getSelectedLine();
+  if (!line || line.indent >= 2) return;
+  line.indent++;
+  save(); render(); focusLine(line.id);
 }
 
-function startDrag(e, idx, clientX, clientY) {
-  e.preventDefault();
-  const end = groupEnd(idx);
-  dnd.active   = true;
-  dnd.srcIdx   = idx;
-  dnd.groupLen = end - idx + 1;
-  dnd.curAfterIdx = null;
+function outdentSelected() {
+  const line = getSelectedLine();
+  if (!line || line.indent <= 0) return;
+  line.indent--;
+  save(); render(); focusLine(line.id);
+}
 
-  // ゴーストにテキスト表示
-  ghost.textContent = lines[idx].text || '（空行）';
-  ghost.style.display = 'block';
-  moveGhost(clientX, clientY);
+function addLineAfterSelected() {
+  const line = getSelectedLine();
+  const idx = line ? lines.findIndex(l => l.id === line.id) : lines.length - 1;
+  const indent = line ? line.indent : 0;
+  const newLine = { id: nextId++, text: '', indent, collapsed: false };
+  lines.splice(idx + 1, 0, newLine);
+  save(); render(); focusLine(newLine.id);
+}
 
-  // ドラッグ中の行グループを半透明に
-  const wraps = document.querySelectorAll('.line-wrap');
-  for (let i=idx; i<=end; i++) {
-    if (wraps[i]) wraps[i].classList.add('dragging');  // wrapはidx順ではないので別途対応
+function deleteSelected() {
+  const line = getSelectedLine();
+  if (!line) return;
+  if (lines.length <= 1) {
+    lines[0].text = '';
+    save(); render(); focusLine(lines[0].id);
+    return;
   }
-  // data-idx で引き直す
-  document.querySelectorAll('.line-wrap[data-idx]').forEach(w=>{
-    const wi=parseInt(w.dataset.idx,10);
-    if(wi>=idx&&wi<=end) w.classList.add('dragging');
-  });
+  const idx = lines.findIndex(l => l.id === line.id);
+  lines.splice(idx, 1);
+  save(); render();
+  focusLine(lines[Math.max(0, idx - 1)].id);
+}
 
-  if (e.type==='touchstart') {
-    document.addEventListener('touchmove', onDragMove, {passive:false});
-    document.addEventListener('touchend', onDragEnd, {once:true});
+function updateButtonStates() {
+  const line = getSelectedLine();
+  document.getElementById('btn-indent').disabled  = !line || line.indent >= 2;
+  document.getElementById('btn-outdent').disabled = !line || line.indent <= 0;
+}
+
+// ================================================================
+// セルフチェック
+// ================================================================
+function selfCheck() {
+  const errors = [];
+
+  // 1. フォントサイズ CSS変数が正しく設定されているか
+  const cssFontSize = getComputedStyle(document.documentElement).getPropertyValue('--font-size').trim();
+  if (cssFontSize !== currentFontSize + 'px') {
+    errors.push('フォントサイズCSS変数が不一致: expected=' + currentFontSize + 'px, actual=' + cssFontSize);
+  }
+
+  // 2. activeクラスが正しい選択肢に付いているか
+  const activeOptions = document.querySelectorAll('.font-size-option.active');
+  if (activeOptions.length !== 1) {
+    errors.push('activeなフォントサイズ選択肢の数が不正: ' + activeOptions.length);
   } else {
-    document.addEventListener('mousemove', onDragMove);
-    document.addEventListener('mouseup', onDragEnd, {once:true});
+    const activeSize = parseInt(activeOptions[0].dataset.size, 10);
+    if (activeSize !== currentFontSize) {
+      errors.push('activeフォントサイズが不一致: expected=' + currentFontSize + ', actual=' + activeSize);
+    }
   }
-}
 
-function onDragMove(e) {
-  const cx = e.touches ? e.touches[0].clientX : e.clientX;
-  const cy = e.touches ? e.touches[0].clientY : e.clientY;
-  moveGhost(cx, cy);
-  updateDropTarget(cy);
-}
+  // 3. hasChildren / トグルボタン判定（子を持つ行が存在する場合のみ）
+  for (let i = 0; i < lines.length; i++) {
+    if (lineHasChildren(i)) {
+      const row = document.querySelector('.line-row[data-id="' + lines[i].id + '"]');
+      if (row && !row.querySelector('.toggle-btn')) {
+        errors.push('id=' + lines[i].id + ' の行: hasChildren=trueなのにtoggle-btnがない');
+      }
+      break; // 1件確認すれば十分
+    }
+  }
 
-function moveGhost(cx, cy) {
-  ghost.style.left = (cx+12)+'px';
-  ghost.style.top  = (cy-16)+'px';
-}
+  // 4. ドロワーの開閉が DOM 上で正しく機能するか
+  openDrawer();
+  const drawerOpen = document.getElementById('drawer').classList.contains('open');
+  closeDrawer();
+  const drawerClosed = !document.getElementById('drawer').classList.contains('open');
+  if (!drawerOpen)   errors.push('openDrawer() が機能していない');
+  if (!drawerClosed) errors.push('closeDrawer() が機能していない');
 
-function updateDropTarget(cy) {
-  // 全インジケーターを非表示
-  document.querySelectorAll('.drop-indicator').forEach(el=>el.classList.remove('visible'));
+  // 5. フォントサイズ切り替えテスト (15px に変えて戻す)
+  const originalSize = currentFontSize;
+  applyFontSize(15);
+  const changed = getComputedStyle(document.documentElement).getPropertyValue('--font-size').trim();
+  applyFontSize(originalSize);
+  if (changed !== '15px') {
+    errors.push('applyFontSize(15) が --font-size に反映されなかった: ' + changed);
+  }
 
-  // ドロップ先を探す（ドラッグ元グループを除く）
-  const srcIdx  = dnd.srcIdx;
-  const srcEnd  = srcIdx + dnd.groupLen - 1;
-  const indicators = document.querySelectorAll('.drop-indicator');
-  let best = null, bestDist = Infinity;
-
-  indicators.forEach(ind=>{
-    const afterIdx = parseInt(ind.dataset.afterIdx, 10);
-    // ドラッグ元グループの範囲内のインジケーターは除外
-    // afterIdx が srcIdx-1 〜 srcEnd の間はスキップ
-    if (afterIdx >= srcIdx-1 && afterIdx <= srcEnd) return;
-    const rect = ind.getBoundingClientRect();
-    const midY = rect.top + rect.height/2;
-    const dist = Math.abs(cy - midY);
-    if (dist < bestDist) { bestDist=dist; best=ind; }
-  });
-
-  if (best && bestDist < 60) {
-    best.classList.add('visible');
-    dnd.curAfterIdx = parseInt(best.dataset.afterIdx, 10);
+  if (errors.length === 0) {
+    console.log('[selfCheck] ✓ 全チェック通過');
   } else {
-    dnd.curAfterIdx = null;
+    errors.forEach(e => console.error('[selfCheck] ✗ ' + e));
   }
-}
-
-function onDragEnd() {
-  document.removeEventListener('mousemove', onDragMove);
-  document.removeEventListener('touchmove', onDragMove);
-
-  ghost.style.display='none';
-  document.querySelectorAll('.drop-indicator').forEach(el=>el.classList.remove('visible'));
-  document.querySelectorAll('.line-wrap.dragging').forEach(el=>el.classList.remove('dragging'));
-
-  if (dnd.active && dnd.curAfterIdx !== null) {
-    applyDrop(dnd.srcIdx, dnd.groupLen, dnd.curAfterIdx);
-  }
-
-  dnd.active=false; dnd.srcIdx=-1; dnd.groupLen=0; dnd.curAfterIdx=null;
-}
-
-// ドロップ処理：グループを srcIdx から取り出して afterIdx の後ろに挿入
-function applyDrop(srcIdx, groupLen, afterIdx) {
-  // グループを取り出す
-  const group = lines.splice(srcIdx, groupLen);
-
-  // 取り出した後の afterIdx を補正
-  // srcIdx より前に挿入なら afterIdx はそのまま
-  // srcIdx より後に挿入なら afterIdx を groupLen 分縮める
-  let insertAfter = afterIdx;
-  if (afterIdx >= srcIdx) {
-    insertAfter = afterIdx - groupLen;
-  }
-
-  // insertAfter+1 の位置に挿入（-1なら先頭）
-  const insertAt = insertAfter + 1;
-  lines.splice(insertAt, 0, ...group);
-
-  persist();
-  renderMemo();
+  return errors.length === 0;
 }
 
 // ================================================================
-// イベント
+// イベント登録 & 初期化
 // ================================================================
-document.getElementById('btn-new').addEventListener('click', newNb);
-document.getElementById('btn-back').addEventListener('click', showList);
-document.getElementById('btn-in').addEventListener('click', ()=>{ const l=getSel(); if(!l||l.indent>=2) return; l.indent++; persist(); renderMemo(); focusLine(l.id); });
-document.getElementById('btn-out').addEventListener('click', ()=>{ const l=getSel(); if(!l||l.indent<=0) return; l.indent--; persist(); renderMemo(); focusLine(l.id); });
-document.getElementById('btn-add').addEventListener('click', ()=>{ const l=getSel(); const idx=l?lines.findIndex(x=>x.id===l.id):lines.length-1; const ind=l?l.indent:0; const nl={id:lineNextId++,text:'',indent:ind,collapsed:false}; lines.splice(idx+1,0,nl); persist(); renderMemo(); focusLine(nl.id); });
-document.getElementById('btn-del').addEventListener('click', ()=>{ const l=getSel(); if(!l) return; if(lines.length<=1){lines[0].text='';persist();renderMemo();focusLine(lines[0].id);return;} const idx=lines.findIndex(x=>x.id===l.id); lines.splice(idx,1); persist(); renderMemo(); focusLine(lines[Math.max(0,idx-1)].id); });
-document.getElementById('btn-clr').addEventListener('click', ()=>{ document.getElementById('conf-overlay').classList.add('open'); });
-document.getElementById('memo-body').addEventListener('click', e=>{ if(e.target===e.currentTarget&&lines.length) focusLine(lines[lines.length-1].id); });
-document.getElementById('btn-menu').addEventListener('click', ()=>{ document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('open'); });
-document.getElementById('drw-close').addEventListener('click', ()=>{ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); });
-document.getElementById('drawer-overlay').addEventListener('click', ()=>{ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); });
-document.getElementById('fs-opts').addEventListener('click', e=>{ const opt=e.target.closest('.fs-opt'); if(!opt) return; const s=parseInt(opt.dataset.size,10); if(!isNaN(s)) applyFont(s); });
-document.getElementById('conf-cancel').addEventListener('click', ()=>{ document.getElementById('conf-overlay').classList.remove('open'); });
-document.getElementById('conf-ok').addEventListener('click', ()=>{ document.getElementById('conf-overlay').classList.remove('open'); lineNextId=2; lines=[{id:1,text:'',indent:0,collapsed:false}]; selId=null; persist(); renderMemo(); focusLine(lines[0].id); });
+document.getElementById('menu-btn').addEventListener('click', openDrawer);
+document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+document.getElementById('drawer-overlay').addEventListener('click', closeDrawer);
 
-// ================================================================
-// 起動
-// ================================================================
-loadFont(); loadData(); applyFont(fontSize); renderList();
+document.getElementById('font-size-options').addEventListener('click', (e) => {
+  const opt = e.target.closest('.font-size-option');
+  if (!opt) return;
+  const size = parseInt(opt.dataset.size, 10);
+  if (!isNaN(size)) applyFontSize(size);
+});
+
+document.getElementById('memo-container').addEventListener('click', e => {
+  if (e.target === e.currentTarget && lines.length > 0)
+    focusLine(lines[lines.length - 1].id);
+});
+document.getElementById('btn-indent').addEventListener('click', indentSelected);
+document.getElementById('btn-outdent').addEventListener('click', outdentSelected);
+document.getElementById('btn-add').addEventListener('click', addLineAfterSelected);
+document.getElementById('btn-delete').addEventListener('click', deleteSelected);
+document.getElementById('btn-clear').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.add('open');
+});
+document.getElementById('confirm-cancel').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.remove('open');
+});
+document.getElementById('confirm-ok').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  nextId = 1;
+  lines = [{ id: nextId++, text: '', indent: 0, collapsed: false }];
+  selectedId = null;
+  save();
+  render();
+  focusLine(lines[0].id);
+});
+
+loadFontSize();
+load();
+render();
+applyFontSize(currentFontSize);
+
+requestAnimationFrame(() => {
+  if (lines.length > 0) focusLine(lines[0].id);
+  selfCheck();
+});
 </script>
 </body>
 </html>
+
